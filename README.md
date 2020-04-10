@@ -133,6 +133,44 @@ pod trunk push OLMKit.podspec --use-libraries --allow-warnings
 pod search OLMKit
 ```
 
+# libolm/OLMKit Swift Package Manager Package
+
+## Swift Example
+
+Package.swift:
+```swift
+// swift-tools-version:5.2
+
+import PackageDescription
+
+let package = Package(
+    name: "testolm",
+    dependencies: [
+        .package(url: "git@github.com:helje5/Olm.git",
+                 .branch("feature/swift-package-manager-c"))
+    ],
+    targets: [
+        .target(
+            name: "testolm",
+            dependencies: [ .product(name: "OLMKit", package: "Olm") ]),
+        .testTarget(
+            name: "testolmTests",
+            dependencies: ["testolm"]),
+    ]
+)
+```
+
+main.swift:
+```swift
+import OLMKit
+
+guard let bob = OLMAccount(newAccount: ()) else { exit(42) }
+bob.generateOneTimeKeys(5)
+
+guard let idKey = bob.identityKeys()?["curve25519"] else { exit(1337) }
+print("key:", idKey)
+```
+
 ## Design
 
 Olm is designed to be easy port to different platforms and to be easy
