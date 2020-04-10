@@ -33,7 +33,7 @@
 
 - (BOOL) initializeAccountMemory {
     size_t accountSize = olm_account_size();
-    _account = malloc(accountSize);
+    _account = (OlmAccount *)malloc(accountSize);
     NSParameterAssert(_account != nil);
     if (!_account) {
         return NO;
@@ -105,7 +105,7 @@
 
 - (NSString *)signMessage:(NSData *)messageData {
     size_t signatureLength = olm_account_signature_length(_account);
-    uint8_t *signatureBytes = malloc(signatureLength);
+    uint8_t *signatureBytes = (uint8_t *)malloc(signatureLength);
     if (!signatureBytes) {
         return nil;
     }

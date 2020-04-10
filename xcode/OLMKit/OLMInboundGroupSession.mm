@@ -55,7 +55,7 @@
     self = [self init];
     if (self) {
         NSData *sessionKeyData = [sessionKey dataUsingEncoding:NSUTF8StringEncoding];
-        size_t result = olm_init_inbound_group_session(session, sessionKeyData.bytes, sessionKeyData.length);
+        size_t result = olm_init_inbound_group_session(session, (const uint8_t *)sessionKeyData.bytes, sessionKeyData.length);
         if (result == olm_error())   {
             const char *olm_error = olm_inbound_group_session_last_error(session);
 
@@ -82,7 +82,7 @@
     self = [self init];
     if (self) {
         NSData *sessionKeyData = [sessionKey dataUsingEncoding:NSUTF8StringEncoding];
-        size_t result = olm_import_inbound_group_session(session, sessionKeyData.bytes, sessionKeyData.length);
+        size_t result = olm_import_inbound_group_session(session, (const uint8_t *)sessionKeyData.bytes, sessionKeyData.length);
         if (result == olm_error())   {
             const char *olm_error = olm_inbound_group_session_last_error(session);
 
@@ -110,7 +110,7 @@
     if (!idData) {
         return nil;
     }
-    size_t result = olm_inbound_group_session_id(session, idData.mutableBytes, idData.length);
+    size_t result = olm_inbound_group_session_id(session, (uint8_t *)idData.mutableBytes, idData.length);
     if (result == olm_error()) {
         const char *error = olm_inbound_group_session_last_error(session);
         NSLog(@"olm_inbound_group_session_id error: %s", error);
@@ -128,7 +128,7 @@
         return nil;
     }
     NSMutableData *mutMessage = messageData.mutableCopy;
-    size_t maxPlaintextLength = olm_group_decrypt_max_plaintext_length(session, mutMessage.mutableBytes, mutMessage.length);
+    size_t maxPlaintextLength = olm_group_decrypt_max_plaintext_length(session, (uint8_t *)mutMessage.mutableBytes, mutMessage.length);
     if (maxPlaintextLength == olm_error()) {
         const char *olm_error = olm_inbound_group_session_last_error(session);
 
@@ -151,7 +151,7 @@
     NSMutableData *plaintextData = [NSMutableData dataWithLength:maxPlaintextLength];
 
     uint32_t message_index;
-    size_t plaintextLength = olm_group_decrypt(session, mutMessage.mutableBytes, mutMessage.length, plaintextData.mutableBytes, plaintextData.length, &message_index);
+    size_t plaintextLength = olm_group_decrypt(session, (uint8_t *)mutMessage.mutableBytes, mutMessage.length, (uint8_t *)plaintextData.mutableBytes, plaintextData.length, &message_index);
     if (plaintextLength == olm_error()) {
         const char *olm_error = olm_inbound_group_session_last_error(session);
 
@@ -195,7 +195,7 @@
 {
     size_t length = olm_export_inbound_group_session_length(session);
     NSMutableData *key = [NSMutableData dataWithLength:length];
-    size_t result = olm_export_inbound_group_session(session, key.mutableBytes, key.length, (uint32_t)messageIndex);
+    size_t result = olm_export_inbound_group_session(session, (uint8_t *)key.mutableBytes, key.length, (uint32_t)messageIndex);
     if (result == olm_error()) {
         const char *olm_error = olm_inbound_group_session_last_error(session);
         NSString *errorString = [NSString stringWithUTF8String:olm_error];

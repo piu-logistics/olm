@@ -88,8 +88,10 @@
     }
 
     size_t result = olm_pk_sign(sign,
-                                messageData.bytes, messageData.length,
-                                signatureData.mutableBytes, signatureLength);
+                                (uint8_t const *)messageData.bytes,
+                                messageData.length,
+                                (uint8_t *)signatureData.mutableBytes,
+                                signatureLength);
     if (result == olm_error()) {
         const char *olm_error = olm_pk_signing_last_error(sign);
 

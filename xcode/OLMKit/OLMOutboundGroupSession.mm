@@ -37,7 +37,8 @@
     self = [super init];
     if (self)
     {
-        session = malloc(olm_outbound_group_session_size());
+        session = (OlmOutboundGroupSession *)
+            malloc(olm_outbound_group_session_size());
         if (session) {
             session = olm_outbound_group_session(session);
         }
@@ -54,7 +55,7 @@
     if (self) {
         NSMutableData *random = [OLMUtility randomBytesOfLength:olm_init_outbound_group_session_random_length(session)];
 
-        size_t result = olm_init_outbound_group_session(session, random.mutableBytes, random.length);
+        size_t result = olm_init_outbound_group_session(session, (uint8_t *)random.mutableBytes, random.length);
         [random resetBytesInRange:NSMakeRange(0, random.length)];
         if (result == olm_error())   {
             const char *error = olm_outbound_group_session_last_error(session);
@@ -71,7 +72,7 @@
     if (!idData) {
         return nil;
     }
-    size_t result = olm_outbound_group_session_id(session, idData.mutableBytes, idData.length);
+    size_t result = olm_outbound_group_session_id(session, (uint8_t *)idData.mutableBytes, idData.length);
     if (result == olm_error()) {
         const char *error = olm_outbound_group_session_last_error(session);
         NSLog(@"olm_outbound_group_session_id error: %s", error);
@@ -91,7 +92,7 @@
     if (!sessionKeyData) {
         return nil;
     }
-    size_t result = olm_outbound_group_session_key(session, sessionKeyData.mutableBytes, sessionKeyData.length);
+    size_t result = olm_outbound_group_session_key(session, (uint8_t *)sessionKeyData.mutableBytes, sessionKeyData.length);
     if (result == olm_error()) {
         const char *error = olm_outbound_group_session_last_error(session);
         NSLog(@"olm_outbound_group_session_key error: %s", error);
@@ -109,7 +110,7 @@
     if (!ciphertext) {
         return nil;
     }
-    size_t result = olm_group_encrypt(session, plaintextData.bytes, plaintextData.length, ciphertext.mutableBytes, ciphertext.length);
+    size_t result = olm_group_encrypt(session, (const uint8_t *)plaintextData.bytes, plaintextData.length, (uint8_t *)ciphertext.mutableBytes, ciphertext.length);
     if (result == olm_error()) {
         const char *olm_error = olm_outbound_group_session_last_error(session);
 
