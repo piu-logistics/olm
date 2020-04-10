@@ -28,6 +28,7 @@ let package = Package(
             name: "OLMKit",
             dependencies: [ "libolm" ],
             path: "xcode",
+            exclude: [ "OLMKit/Info.plist" ],
             sources: [ "OLMKit" ],
             publicHeadersPath: "OLMKit",
             cSettings: [
