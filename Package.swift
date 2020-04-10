@@ -37,7 +37,7 @@ let package = Package(
             path: "xcode",
             exclude: [ "OLMKit/Info.plist" ],
             sources: [ "OLMKit" ],
-            publicHeadersPath: "OLMKit",
+            publicHeadersPath: "PublicHeaders",
             cSettings: [
                 .headerSearchPath("."),
                 .unsafeFlags([
