@@ -38,7 +38,8 @@
     self = [super init];
     if (self)
     {
-        session = malloc(olm_inbound_group_session_size());
+        session = (OlmInboundGroupSession *)
+            malloc(olm_inbound_group_session_size());
         if (session) {
             session = olm_inbound_group_session(session);
         }

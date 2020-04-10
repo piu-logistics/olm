@@ -37,7 +37,7 @@ NSString *const OLMErrorDomain = @"org.matrix.olm";
 
 - (BOOL) initializeUtilityMemory {
     size_t utilitySize = olm_utility_size();
-    _utility = malloc(utilitySize);
+    _utility = (OlmUtility *)malloc(utilitySize);
     NSParameterAssert(_utility != nil);
     if (!_utility) {
         return NO;

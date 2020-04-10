@@ -83,7 +83,7 @@
 /** public identity keys */
 - (NSDictionary*) identityKeys {
     size_t identityKeysLength = olm_account_identity_keys_length(_account);
-    uint8_t *identityKeysBytes = malloc(identityKeysLength);
+    uint8_t *identityKeysBytes = (uint8_t *)malloc(identityKeysLength);
     if (!identityKeysBytes) {
         return nil;
     }
@@ -124,7 +124,7 @@
 
 - (NSDictionary*) oneTimeKeys {
     size_t otkLength = olm_account_one_time_keys_length(_account);
-    uint8_t *otkBytes = malloc(otkLength);
+    uint8_t *otkBytes = (uint8_t *)malloc(otkLength);
     if (!otkBytes) {
         return nil;
     }

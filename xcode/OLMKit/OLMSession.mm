@@ -31,7 +31,7 @@
 
 - (BOOL) initializeSessionMemory {
     size_t size = olm_session_size();
-    _session = malloc(size);
+    _session = (OlmSession *)malloc(size);
     NSParameterAssert(_session != nil);
     if (!_session) {
         return NO;
@@ -235,7 +235,7 @@
         return nil;
     }
     NSString *ciphertextString = [[NSString alloc] initWithData:ciphertext encoding:NSUTF8StringEncoding];
-    OLMMessage *encryptedMessage = [[OLMMessage alloc] initWithCiphertext:ciphertextString type:messageType];
+    OLMMessage *encryptedMessage = [[OLMMessage alloc] initWithCiphertext:ciphertextString type:OLMMessageType(messageType)];
     return encryptedMessage;
 }
 
