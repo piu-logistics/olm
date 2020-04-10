@@ -14,7 +14,12 @@ let package = Package(
         .target(
             name: "libolm",
             path: ".",
-            sources: [ "src" ],
+            sources: [ 
+              "src",
+              "lib/crypto-algorithms/aes.c",
+              "lib/crypto-algorithms/sha256.c",
+              "lib/curve25519-donna/curve25519-donna.c"
+            ],
             publicHeadersPath: "include",
             cSettings: [
                 .define("OLMLIB_VERSION_MAJOR", to: String(version.major)),
