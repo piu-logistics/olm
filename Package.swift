@@ -7,7 +7,8 @@ let version = ( major: 3, minor: 1, patch: 4 )
 let package = Package(
     name: "Olm",
     products: [
-        .library(name: "libolm", targets: ["libolm"])
+        .library(name: "libolm", targets: ["libolm"]),
+        .library(name: "OLMKit", targets: ["OLMKit"]),
     ],
     targets: [
         .target(
@@ -21,6 +22,20 @@ let package = Package(
               .define("OLMLIB_VERSION_PATCH", to: String(version.patch)),
               .headerSearchPath("lib"),
               .unsafeFlags([ "-Wall", "-Werror" ])
+            ]
+        ),
+        .target(
+            name: "OLMKit",
+            dependencies: [ "libolm" ],
+            path: "xcode",
+            sources: [ "OLMKit" ],
+            publicHeadersPath: "OLMKit",
+            cSettings: [
+              .headerSearchPath("."),
+              .unsafeFlags([ 
+                "-Wno-unused-command-line-argument",
+                "-fmodules", "-fcxx-modules"
+              ])
             ]
         )
     ],
