@@ -20,12 +20,14 @@ let package = Package(
               "lib/crypto-algorithms/sha256.c",
               "lib/curve25519-donna/curve25519-donna.c"
             ],
-            publicHeadersPath: "include",
+            //publicHeadersPath: "include",
+            publicHeadersPath: "include/public",
             cSettings: [
                 .define("OLMLIB_VERSION_MAJOR", to: String(version.major)),
                 .define("OLMLIB_VERSION_MINOR", to: String(version.minor)),
                 .define("OLMLIB_VERSION_PATCH", to: String(version.patch)),
                 .headerSearchPath("lib"),
+                .headerSearchPath("include"),
                 .unsafeFlags([ "-Wall", "-Werror" ])
             ]
         ),
