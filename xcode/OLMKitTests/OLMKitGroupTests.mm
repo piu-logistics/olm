@@ -119,16 +119,16 @@
     XCTAssertEqual(messageIndex, 0);
 
     // export the keys
-    NSString *export = [session1 exportSessionAtMessageIndex:0 error:&error];
+    NSString *cexport = [session1 exportSessionAtMessageIndex:0 error:&error];
 
     XCTAssertNil(error);
-    XCTAssertGreaterThan(export.length, 0);
+    XCTAssertGreaterThan(cexport.length, 0);
 
     // free the old session to check there is no shared data
     session1 = nil;
 
     // import the keys into another inbound group session
-    OLMInboundGroupSession *session2 = [[OLMInboundGroupSession alloc] initInboundGroupSessionWithImportedSession:export error:&error];
+    OLMInboundGroupSession *session2 = [[OLMInboundGroupSession alloc] initInboundGroupSessionWithImportedSession:cexport error:&error];
 
     XCTAssertNil(error);
     XCTAssert(session2);

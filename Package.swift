@@ -17,11 +17,11 @@ let package = Package(
             sources: [ "src" ],
             publicHeadersPath: "include",
             cSettings: [
-              .define("OLMLIB_VERSION_MAJOR", to: String(version.major)),
-              .define("OLMLIB_VERSION_MINOR", to: String(version.minor)),
-              .define("OLMLIB_VERSION_PATCH", to: String(version.patch)),
-              .headerSearchPath("lib"),
-              .unsafeFlags([ "-Wall", "-Werror" ])
+                .define("OLMLIB_VERSION_MAJOR", to: String(version.major)),
+                .define("OLMLIB_VERSION_MINOR", to: String(version.minor)),
+                .define("OLMLIB_VERSION_PATCH", to: String(version.patch)),
+                .headerSearchPath("lib"),
+                .unsafeFlags([ "-Wall", "-Werror" ])
             ]
         ),
         .target(
@@ -32,11 +32,19 @@ let package = Package(
             sources: [ "OLMKit" ],
             publicHeadersPath: "OLMKit",
             cSettings: [
-              .headerSearchPath("."),
-              .unsafeFlags([ 
-                "-Wno-unused-command-line-argument",
-                "-fmodules", "-fcxx-modules"
-              ])
+                .headerSearchPath("."),
+                .unsafeFlags([
+                    "-Wno-unused-command-line-argument",
+                    "-fmodules", "-fcxx-modules"
+                ])
+            ]
+        ),
+        .testTarget(
+            name: "OLMKitTests",
+            dependencies: [ "OLMKit", "libolm" ],
+            path: "xcode/OLMKitTests",
+            cSettings: [
+                .headerSearchPath(".."),
             ]
         )
     ],
