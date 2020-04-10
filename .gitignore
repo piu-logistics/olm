@@ -27,3 +27,7 @@ xcuserdata/
 *.dSYM
 Pods/
 *.xcworkspace
+
+# Swift Package Manager
+.build
+
