@@ -1,0 +1,27 @@
+default:
+  image: docker.io/emscripten/emsdk:latest
+
+stages:
+  - build
+  - test
+
+build:js:
+  stage: build
+  script:
+    - ln -sf $(which python3) /usr/local/bin/python
+    - make js
+  artifacts:
+    paths:
+      - build/javascript
+      - javascript/olm.js
+      - javascript/olm.wasm
+      - javascript/exported_functions.json
+
+test:js:
+  stage: test
+  needs:
+    - build:js
+  script:
+    - pushd javascript
+    - npm i
+    - npm run test
