@@ -4,6 +4,7 @@ image: docker.io/inovex/gitlab-ci-android
 stages:
   - build
   - test
+  - publish
 
 variables:
   GRADLE_OPTS: "-Dorg.gradle.daemon=false"
@@ -41,7 +42,7 @@ test:android:aar:
     - build:android:aar
 
 publish:android:aar:
-  stage: test
+  stage: publish
   script:
     - ./gradlew publish
   needs:
