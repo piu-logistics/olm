@@ -17,12 +17,23 @@
 
 #include <cstring>
 
+#if defined(OLM_USE_OPENSSL) || defined(OLM_USE_LIBRESSL)
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#ifdef OLM_USE_OPENSSL
+#include <openssl/kdf.h>
+#else
+#include <openssl/hkdf.h>
+#endif
+#else
 extern "C" {
 
 #include "crypto-algorithms/aes.h"
 #include "crypto-algorithms/sha256.h"
 
 }
+#endif
 
 #include "ed25519/src/ed25519.h"
 #include "curve25519-donna.h"
@@ -36,6 +47,8 @@ static const std::size_t AES_BLOCK_LENGTH = 16;
 static const std::size_t SHA256_BLOCK_LENGTH = 64;
 static const std::uint8_t HKDF_DEFAULT_SALT[32] = {};
 
+
+#if !defined(OLM_USE_OPENSSL) && !defined(OLM_USE_LIBRESSL)
 
 template<std::size_t block_size>
 inline static void xor_block(
@@ -97,6 +110,20 @@ inline static void hmac_sha256_final(
     olm::unset(final_context);
     olm::unset(o_pad);
 }
+
+
+#else
+
+template <typename T>
+static T checked(T val) {
+    if (!val) {
+        abort();
+    }
+    return val;
+}
+
+#endif
+
 
 } // namespace
 
@@ -176,6 +203,14 @@ void _olm_crypto_aes_encrypt_cbc(
     std::uint8_t const * input, std::size_t input_length,
     std::uint8_t * output
 ) {
+#if defined(OLM_USE_OPENSSL) || defined(OLM_USE_LIBRESSL)
+    EVP_CIPHER_CTX* ctx = checked(EVP_CIPHER_CTX_new());
+    checked(EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key->key, iv->iv));
+    int output_length[2];
+    checked(EVP_EncryptUpdate(ctx, output, &output_length[0], input, input_length));
+    checked(EVP_EncryptFinal_ex(ctx, output + output_length[0], &output_length[1]));
+    EVP_CIPHER_CTX_free(ctx);
+#else
     std::uint32_t key_schedule[AES_KEY_SCHEDULE_LENGTH];
     ::aes_key_setup(key->key, key_schedule, AES_KEY_BITS);
     std::uint8_t input_block[AES_BLOCK_LENGTH];
@@ -198,6 +233,7 @@ void _olm_crypto_aes_encrypt_cbc(
     ::aes_encrypt(input_block, output, key_schedule, AES_KEY_BITS);
     olm::unset(key_schedule);
     olm::unset(input_block);
+#endif
 }
 
 
@@ -207,6 +243,15 @@ std::size_t _olm_crypto_aes_decrypt_cbc(
     std::uint8_t const * input, std::size_t input_length,
     std::uint8_t * output
 ) {
+#if defined(OLM_USE_OPENSSL) || defined(OLM_USE_LIBRESSL)
+    EVP_CIPHER_CTX* ctx = checked(EVP_CIPHER_CTX_new());
+    checked(EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, key->key, iv->iv));
+    int output_length[2];
+    checked(EVP_DecryptUpdate(ctx, output, &output_length[0], input, input_length));
+    checked(EVP_DecryptFinal_ex(ctx, output + output_length[0], &output_length[1]));
+    EVP_CIPHER_CTX_free(ctx);
+    return output_length[0] + output_length[1];
+#else
     std::uint32_t key_schedule[AES_KEY_SCHEDULE_LENGTH];
     ::aes_key_setup(key->key, key_schedule, AES_KEY_BITS);
     std::uint8_t block1[AES_BLOCK_LENGTH];
@@ -223,6 +268,7 @@ std::size_t _olm_crypto_aes_decrypt_cbc(
     olm::unset(block2);
     std::size_t padding = output[input_length - 1];
     return (padding > input_length) ? std::size_t(-1) : (input_length - padding);
+#endif
 }
 
 
@@ -230,11 +276,15 @@ void _olm_crypto_sha256(
     std::uint8_t const * input, std::size_t input_length,
     std::uint8_t * output
 ) {
+#if defined(OLM_USE_OPENSSL) || defined(OLM_USE_LIBRESSL)
+    checked(EVP_Digest(input, input_length, output, nullptr, EVP_sha256(), nullptr));
+#else
     ::SHA256_CTX context;
     ::sha256_init(&context);
     ::sha256_update(&context, input, input_length);
     ::sha256_final(&context, output);
     olm::unset(context);
+#endif
 }
 
 
@@ -243,6 +293,9 @@ void _olm_crypto_hmac_sha256(
     std::uint8_t const * input, std::size_t input_length,
     std::uint8_t * output
 ) {
+#if defined(OLM_USE_OPENSSL) || defined(OLM_USE_LIBRESSL)
+    checked(HMAC(EVP_sha256(), key, key_length, input, input_length, output, nullptr));
+#else
     std::uint8_t hmac_key[SHA256_BLOCK_LENGTH];
     ::SHA256_CTX context;
     hmac_sha256_key(key, key_length, hmac_key);
@@ -251,6 +304,7 @@ void _olm_crypto_hmac_sha256(
     hmac_sha256_final(&context, hmac_key, output);
     olm::unset(hmac_key);
     olm::unset(context);
+#endif
 }
 
 
@@ -260,6 +314,36 @@ void _olm_crypto_hkdf_sha256(
     std::uint8_t const * info, std::size_t info_length,
     std::uint8_t * output, std::size_t output_length
 ) {
+#ifdef OLM_USE_OPENSSL
+    EVP_PKEY_CTX *pctx = checked(EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL));
+    checked(EVP_PKEY_derive_init(pctx));
+    checked(EVP_PKEY_CTX_set_hkdf_md(pctx, EVP_sha256()));
+
+    if (input_length) {
+        checked(EVP_PKEY_CTX_set1_hkdf_key(pctx, input, input_length));
+    } else {
+        /* OpenSSL HKDF doesn't directly support zero-length keys:
+         * https://github.com/openssl/openssl/issues/8531
+         * Do the extract step manually with HMAC and use HKDF only for expand */
+        uint8_t intermediate[SHA256_OUTPUT_LENGTH];
+        checked(HMAC(EVP_sha256(), nullptr, 0, salt, salt_length, intermediate, nullptr));
+        checked(EVP_PKEY_CTX_hkdf_mode(pctx, EVP_PKEY_HKDEF_MODE_EXPAND_ONLY));
+        checked(EVP_PKEY_CTX_set1_hkdf_key(pctx, intermediate, sizeof(intermediate)));
+    }
+
+    checked(EVP_PKEY_CTX_set1_hkdf_salt(pctx, salt, salt_length));
+    checked(EVP_PKEY_CTX_add1_hkdf_info(pctx, info, info_length));
+    checked(EVP_PKEY_derive(pctx, output, &output_length));
+    EVP_PKEY_CTX_free(pctx);
+#elif defined(OLM_USE_LIBRESSL)
+    if (salt_length == 0) {
+        /* LibreSSL HKDF rejects nullptr salt, even if salt_length is 0.
+         * salt needs to be set to something else. */
+        salt = (const uint8_t*)"";
+    }
+    checked(HKDF(output, output_length, EVP_sha256(), input, input_length,
+                 salt, salt_length, info, info_length));
+#else
     ::SHA256_CTX context;
     std::uint8_t hmac_key[SHA256_BLOCK_LENGTH];
     std::uint8_t step_result[SHA256_OUTPUT_LENGTH];
@@ -296,4 +380,5 @@ void _olm_crypto_hkdf_sha256(
     olm::unset(context);
     olm::unset(hmac_key);
     olm::unset(step_result);
+#endif
 }
