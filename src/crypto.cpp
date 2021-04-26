@@ -131,6 +131,15 @@ void _olm_crypto_curve25519_generate_key(
     uint8_t const * random_32_bytes,
     struct _olm_curve25519_key_pair *key_pair
 ) {
+#ifdef OLM_USE_OPENSSL
+    EVP_PKEY *pkey = checked(EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, nullptr,
+                             random_32_bytes, 32));
+    size_t priv_len = CURVE25519_KEY_LENGTH;
+    size_t pub_len = CURVE25519_KEY_LENGTH;
+    checked(EVP_PKEY_get_raw_private_key(pkey, key_pair->private_key.private_key, &priv_len));
+    checked(EVP_PKEY_get_raw_public_key(pkey, key_pair->public_key.public_key, &pub_len));
+    EVP_PKEY_free(pkey);
+#else
     std::memcpy(
         key_pair->private_key.private_key, random_32_bytes,
         CURVE25519_KEY_LENGTH
@@ -140,6 +149,7 @@ void _olm_crypto_curve25519_generate_key(
         key_pair->private_key.private_key,
         CURVE25519_BASEPOINT
     );
+#endif
 }
 
 
@@ -148,7 +158,22 @@ void _olm_crypto_curve25519_shared_secret(
     const struct _olm_curve25519_public_key * their_key,
     std::uint8_t * output
 ) {
+#ifdef OLM_USE_OPENSSL
+    EVP_PKEY *pkey = checked(EVP_PKEY_new_raw_private_key(EVP_PKEY_X25519, nullptr,
+                             our_key->private_key.private_key, CURVE25519_KEY_LENGTH));
+    EVP_PKEY *peer = checked(EVP_PKEY_new_raw_public_key(EVP_PKEY_X25519, nullptr,
+                             their_key->public_key, CURVE25519_KEY_LENGTH));
+    EVP_PKEY_CTX *ctx = checked(EVP_PKEY_CTX_new(pkey, nullptr));
+    checked(EVP_PKEY_derive_init(ctx));
+    checked(EVP_PKEY_derive_set_peer(ctx, peer));
+    size_t shared_secret_length = CURVE25519_SHARED_SECRET_LENGTH;
+    checked(EVP_PKEY_derive(ctx, output, &shared_secret_length));
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(peer);
+    EVP_PKEY_free(pkey);
+#else
     ::curve25519_donna(output, our_key->private_key.private_key, their_key->public_key);
+#endif
 }
 
 
