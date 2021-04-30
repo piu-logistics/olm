@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.4)
 
 project(olm VERSION 3.2.2 LANGUAGES CXX C)
 
+option(OLM_ANDROID_JNI "Add Android JNI support" OFF)
 option(OLM_TESTS "Build tests" ON)
 option(BUILD_SHARED_LIBS "Build as a shared library" ON)
 
@@ -47,6 +48,21 @@ add_library(olm
     lib/crypto-algorithms/sha256.c
     lib/curve25519-donna/curve25519-donna.c)
 add_library(Olm::Olm ALIAS olm)
+
+if(OLM_ANDROID_JNI)
+    target_sources(olm PRIVATE
+        jni/olm_account.cpp
+        jni/olm_session.cpp
+        jni/olm_jni_helper.cpp
+        jni/olm_inbound_group_session.cpp
+        jni/olm_outbound_group_session.cpp
+        jni/olm_utility.cpp
+        jni/olm_manager.cpp
+        jni/olm_pk.cpp
+        jni/olm_sas.cpp)
+    target_link_libraries(olm log)
+    target_compile_definitions(olm PRIVATE "$<$<CONFIG:DEBUG>:NDK_DEBUG>")
+endif()
 
 target_include_directories(olm
     PUBLIC

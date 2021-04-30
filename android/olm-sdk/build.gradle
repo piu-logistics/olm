@@ -1,12 +1,10 @@
-import org.apache.tools.ant.taskdefs.condition.Os
-
 apply plugin: 'com.android.library'
 
 android {
     compileSdkVersion 30
 
     defaultConfig {
-        minSdkVersion 14
+        minSdkVersion 16
         targetSdkVersion 30
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -14,6 +12,21 @@ android {
         // "pm clear" command after each test invocation. This command ensures
         // that the app's state is completely cleared between tests.
         testInstrumentationRunnerArguments clearPackageData: 'true'
+
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_STL=c++_static',
+                          '-DCMAKE_C_FLAGS=-fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -Wall',
+                          '-DCMAKE_CXX_FLAGS=-fstack-protector-all -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -Wall',
+                          '-DCMAKE_SHARED_LINKER_FLAGS=-z relro -z now',
+                          '-DOLM_ANDROID_JNI=on',
+                          '-DOLM_TESTS=off'
+            }
+        }
+
+        ndk {
+            abiFilters 'arm64-v8a', 'armeabi-v7a', 'x86_64', 'x86'
+        }
     }
     buildTypes {
         debug {
@@ -31,9 +44,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    sourceSets.main {
-        jniLibs.srcDir 'src/main/libs'
-        jni.srcDirs = []
+    externalNativeBuild {
+        cmake {
+            path '../../CMakeLists.txt'
+        }
     }
 
     task buildJavaDoc(type: Javadoc) {
@@ -44,36 +58,10 @@ android {
         failOnError false
     }
 
-    task ndkBuildNativeRelease(type: Exec, description: 'NDK building..') {
-        println 'ndkBuildNativeRelease starts..'
-        workingDir file('src/main')
-        commandLine getNdkBuildCmd(), 'NDK_DEBUG=0'
-    }
-
-    task ndkBuildNativeDebug(type: Exec, description: 'NDK building..') {
-        println 'ndkBuildNativeDebug starts..'
-        workingDir file('src/main')
-        commandLine getNdkBuildCmd(), 'NDK_DEBUG=1'
-    }
-
-    task cleanNative(type: Exec, description: 'Clean NDK build') {
-        workingDir file('src/main')
-        commandLine getNdkBuildCmd(), 'clean'
-    }
-
     tasks.withType(JavaCompile) {
         compileTask ->
-            if (compileTask.name.startsWith('compileDebugJava')) {
-                println 'test compile: Debug'
-                compileTask.dependsOn ndkBuildNativeDebug
-            } else if (compileTask.name.startsWith('compileReleaseJava')) {
-                println 'test compile: Release'
-                compileTask.dependsOn ndkBuildNativeRelease
-            }
             compileTask.dependsOn buildJavaDoc
     }
-
-    clean.dependsOn cleanNative
 
 
     libraryVariants.all { variant ->
@@ -84,24 +72,6 @@ android {
             }
         }
     }
-}
-
-def getNdkFolder() {
-    Properties properties = new Properties()
-    properties.load(project.rootProject.file('local.properties').newDataInputStream())
-    def ndkFolder = properties.getProperty('ndk.dir', null)
-    if (ndkFolder == null)
-        throw new GradleException("NDK location missing. Define it with ndk.dir in the local.properties file")
-
-    return ndkFolder
-}
-
-def getNdkBuildCmd() {
-    def ndkBuildCmd = getNdkFolder() + "/ndk-build"
-    if (Os.isFamily(Os.FAMILY_WINDOWS))
-        ndkBuildCmd += ".cmd"
-
-    return ndkBuildCmd
 }
 
 def gitRevision() {
