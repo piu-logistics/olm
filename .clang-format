@@ -1,0 +1,11 @@
+---
+BasedOnStyle: WebKit
+IndentWidth: 4
+ColumnLimit: 80
+---
+Language: cpp
+PointerAlignment: Middle
+IndentCaseLabels: true
+BinPackArguments: true
+SpaceAfterCStyleCast: true
+---
