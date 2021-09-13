@@ -120,8 +120,7 @@ endorsed by the Matrix.org Foundation C.I.C.
 ## Release process
 
 First: bump version numbers in ``common.mk``, ``CMakeLists.txt``,
-``javascript/package.json``, ``python/olm/__version__.py``, ``OLMKit.podspec``, ``Package.swift``,
-and ``android/olm-sdk/src/main/java/org/matrix/olm/OlmManager.java`` in function ``getVersion()```.
+``javascript/package.json``, ``python/olm/__version__.py``, ``OLMKit.podspec``, ``Package.swift`` and ``android/gradle.properties``.
 
 Also, ensure the changelog is up to date, and that everything is committed to
 git.
@@ -161,6 +160,14 @@ Python and JavaScript packages are published to the registry at
 documentation contains instructions on how to set up twine (Python) and npm
 (JavaScript) to upload to the registry.
 
+To publish the Android library to MavenCentral (you will need some secrets), in the /android folder:
+ - Run the command `./gradlew clean publish --no-daemon --no-parallel --stacktrace`.
+ - Connect to https://s01.oss.sonatype.org
+ - Click on Staging Repositories and check the the files have been uploaded
+ - Click on close
+ - Wait (check Activity tab until step "Repository closed" is displayed)
+ - Click on release. The staging repository will disappear
+ - Check that the release is available in https://repo1.maven.org/maven2/org/matrix/android/olm/ (it can take a few minutes)
 
 ## Design
 
