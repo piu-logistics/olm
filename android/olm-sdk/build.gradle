@@ -170,8 +170,8 @@ project.afterEvaluate {
             maven {
                 url "https://gitlab.matrix.org/api/v4/projects/27/packages/maven"
                 credentials(HttpHeaderCredentials) {
-                    name = "Deploy-Token"
-                    value = matrixOrgPrivateToken
+                    name = System.getenv("REPO_TOKEN_TYPE")
+                    value = System.getenv("REPO_TOKEN")
                 }
                 authentication {
                     header(HttpHeaderAuthentication)
